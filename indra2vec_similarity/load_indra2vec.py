@@ -9,8 +9,11 @@ way the underlying word2vec model was trained.
 import gzip
 import pathlib
 from itertools import combinations
+from typing import Optional
 
+import click
 from scipy.spatial.distance import pdist
+from tqdm import tqdm
 
 from indra2vec import Model
 
@@ -25,7 +28,10 @@ CHEMICAL_PREFIXES = [
 ]
 
 
-def main():
+@click.command()
+@click.option('--cutoff', type=float, help='Apply a minimum cosine similarity cutoff.')
+@click.option('--precision', type=int, default=3, show_default=True, help='Precision of similarities')
+def main(cutoff: Optional[float], precision: int):
     # Load the default model, which is trained at belief >= 0.20 from
     # the INDRA2Vec repo. This code isn't public yet and neither is the
     # full INDRA db on which it was trained, so just ask if you want to
@@ -43,13 +49,29 @@ def main():
     # only consider the vectors corresponding to all chemicals
     vectors = model[curies]
 
-    # calculate the full pairwise distance, returning a condensed distance matrix
-    distances = pdist(vectors, metric='cosine')
+    # calculate the full pairwise distance, returning a condensed distance matrix,
+    # then convert back to similarities so 1.0 means they are basically the same
+    # and 0.0 means very different.
+    similarities = 1 - pdist(vectors, metric='cosine')
+
+    # Match combinations and unpack tuples
+    it = (
+        (left, right, round(similarity, precision))
+        for (left, right), similarity in zip(combinations(curies, 2), similarities)
+    )
+
+    # Apply a minimum similarity cutoff, if given
+    if cutoff is not None:
+        it = (
+            (left, right, similarity)
+            for left, right, similarity in it
+            if cutoff < similarity
+        )
 
     # This is about ~7GB unzipped so this is necessary
     with gzip.open(PATH, 'wt') as file:
-        for (left, right), distance in zip(combinations(curies, 2), distances):
-            print(left, right, round(distance, 3), sep='\t', file=file)
+        for left, right, similarity in tqdm(it, desc='writing'):
+            print(left, right, similarity, sep='\t', file=file)
 
 
 if __name__ == '__main__':
