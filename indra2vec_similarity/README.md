@@ -4,6 +4,10 @@ The INDRA2Vec embeddings were done on the INDRA database dump with a minimum bel
 model. The similarities are calculated with the cosine metric to match the way the underlying word2vec model was
 trained.
 
+Download this data as a three column TSV [here](https://www.synapse.org/Portal/filehandleassociation?associatedObjectId=syn25928962&associatedObjectType=FileEntity&fileHandleId=78460350).
+The columns are chemical 1 compact URI (string), chemical 2 compact URI (string), cosine similarity (float). There
+is no header row.
+
 ## Artifacts
 
 The following image shows the distribution of cosine similarities. Note, the cosine similarity is
