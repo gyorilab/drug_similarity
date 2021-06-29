@@ -39,13 +39,20 @@ def main():
     help="Apply a minimum cosine similarity cutoff.",
 )
 @click.option(
+    "--belief",
+    default="20",
+    type=str,
+    show_default=True,
+    help="Minimum belief cutoff percent",
+)
+@click.option(
     "--precision",
     type=int,
     default=3,
     show_default=True,
     help="Precision of similarities",
 )
-def calculate(cutoff: Optional[float], precision: int):
+def calculate(cutoff: Optional[float], belief: str, precision: int):
     import gzip
     from collections import Counter
     from itertools import combinations
@@ -63,7 +70,7 @@ def calculate(cutoff: Optional[float], precision: int):
     # the INDRA2Vec repo. This code isn't public yet and neither is the
     # full INDRA db on which it was trained, so just ask if you want to
     # take a look or know more.
-    model = Model.load_default()
+    model = Model.load_default("embeddings", "full", belief)
 
     # extract all chemical CURIEs from the model based on prefix. This might
     # lose a few MeSH chemicals, but we'll accept that for simplicity's sake.
