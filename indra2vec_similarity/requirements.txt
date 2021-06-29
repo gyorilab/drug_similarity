@@ -1,0 +1,9 @@
+click
+matplotlib
+networkx
+pystow
+seaborn
+scipy
+synapseclient
+tabulate
+tqdm
