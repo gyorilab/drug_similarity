@@ -16,7 +16,8 @@ sms_download <- function() {
   }
   synapser::synLogin()
   synapser::synGet("syn25955274", downloadLocation = getwd(), ifcollision = "overwrite.local")
-  synapser::synGet("syn25955272", downloadLocation = getwd(), ifcollision = "overwrite.local")
-  synapser::synGet("syn25955273", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  synapser::synGet("syn25956758", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  synapser::synGet("syn25956756", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  synapser::synGet("syn25956757", downloadLocation = getwd(), ifcollision = "overwrite.local")
   NULL
 }
