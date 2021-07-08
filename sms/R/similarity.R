@@ -24,7 +24,7 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
   if (!exists("sms_data_tas", envir = .GlobalEnv)) {
     message("Loading TAS data...")
     assign(
-      "sms_data_tas", data.table::fread("tas.csv.gz"), envir = .GlobalEnv
+      "sms_data_tas", data.table::fread("sms_tas.csv.gz"), envir = .GlobalEnv
     )
   }
   query_ids <- sms_compound_ids(query_ids)
@@ -82,7 +82,7 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
     message("Loading TAS data...")
     assign(
       "sms_data_fingerprints",
-      morgancpp::MorganFPS$new("fingerprints.bin", from_file = TRUE),
+      morgancpp::MorganFPS$new("sms_fingerprints.bin", from_file = TRUE),
       envir = .GlobalEnv
     )
   }
@@ -133,7 +133,7 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, s
   if (!exists("sms_data_phenotypic", envir = .GlobalEnv)) {
     message("Loading phenotypic data...")
     assign(
-      "sms_data_phenotypic", data.table::fread("phenotypic.csv.gz"), envir = .GlobalEnv
+      "sms_data_phenotypic", data.table::fread("sms_phenotypic.csv.gz"), envir = .GlobalEnv
     )
   }
   query_ids <- sms_compound_ids(query_ids)
