@@ -14,6 +14,9 @@
 #' for similarity calculation. It requires that at least one of the two compounds
 #' has a binding assertion < 10 for the given target.
 #'
+#' @examples
+#' sms_tas_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE)
+#'
 #' @template similarity-params-template
 #' @param min_n Minimum number of shared targets with TAS annotation
 #' @export
@@ -69,6 +72,9 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
 #'
 #' Computes the Tanimoto similarity between Morgan fingerprints.
 #'
+#' @examples
+#' sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE)
+#'
 #' @template similarity-params-template
 #' @export
 sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_names = FALSE) {
@@ -116,6 +122,9 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
 #' on them that are published in ChEMBL. The similarity metric is the Pearson
 #' correlation between the normalized results of all assays shared by both
 #' compounds.
+#'
+#' @examples
+#' sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE)
 #'
 #' @template similarity-params-template
 #' @param min_n Minimum number of shared assays between compounds

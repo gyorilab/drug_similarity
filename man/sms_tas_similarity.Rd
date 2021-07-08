@@ -4,15 +4,24 @@
 \alias{sms_tas_similarity}
 \title{Calculate Target Affinity Spectrum (TAS) similarity}
 \usage{
-sms_tas_similarity(query_ids, target_ids = NULL, min_n = 4)
+sms_tas_similarity(
+  query_ids,
+  target_ids = NULL,
+  min_n = 4,
+  show_compound_names = FALSE
+)
 }
 \arguments{
-\item{querys}{Compounds (names or \code{lspci_ids}) for which to calculate
-similarity. If no targets are provided, the similarity of
-all query compounds with each other are calculated.}
+\item{query_ids}{Compounds (names or \code{lspci_ids}) for which to calculate
+similarity. If no targets are provided, the pairwise similarity of
+the query compounds with all other compounds is calculated.}
 
-\item{targets}{If provided (names or \code{lspci_ids}), all pairwise
+\item{target_ids}{If provided (names or \code{lspci_ids}), all pairwise
 similarities between query and target compounds are calculated.}
+
+\item{min_n}{Minimum number of shared targets with TAS annotation}
+
+\item{show_compound_names}{Add columns with compound names to output}
 }
 \value{
 A 3 column data frame with query_id, target_id, and similarity
@@ -28,7 +37,12 @@ Analyzing and Designing Optimized Small-Molecule Collections and Libraries.
 Cell Chemical Biology 26, 765-777.e3.}
 }
 \details{
-Before similarity functions can be used, compound data needs
+In the output, \code{n_tas_prior} represents the number of annotated targets shared
+between compounds. \code{n_tas} is the number of annotated targets actually used
+for similarity calculation. It requires that at least one of the two compounds
+has a binding assertion < 10 for the given target.
+
+Before similarity functions can be used compound data needs
 to be downloaded to the working directory from
 \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} or
 automatically using the \code{\link[=sms_download]{sms_download()}} function.
@@ -37,6 +51,10 @@ Compound names can be provided directly to the function,
 mapped to \code{lspci_ids} using the \code{\link[=sms_compound_ids]{sms_compound_ids()}}
 function, or using the \code{lsp_compound_names} table from
 \url{https://labsyspharm.shinyapps.io/smallmoleculesuite}.
+}
+\examples{
+sms_tas_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE)
+
 }
 \seealso{
 \code{\link[=sms_download]{sms_download()}} for downloading SMS data
