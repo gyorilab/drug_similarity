@@ -5,8 +5,8 @@
 #'   similarities between query and target compounds are calculated.
 #' @param show_compound_names Add columns with compound names to output
 #' @details Before similarity functions can be used compound data needs
-#'   to be downloaded to the working directory from
-#'   \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} or
+#'   to be downloaded to the working directory from the
+#'   \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse repository} or
 #'   automatically using the [sms_download()] function.
 #'
 #' Compound names can be provided directly to the function,
