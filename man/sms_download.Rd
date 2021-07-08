@@ -7,5 +7,10 @@
 sms_download()
 }
 \description{
-Download Small Molecule Suite data
+Download SMS compound data from
+\href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} to the working
+directory. Synapse login credentials must be saved using \code{\link[synapser:synLogin]{synapser::synLogin()}}.
+}
+\details{
+\code{synLogin(email = "xxx", password = "xxx", rememberMe = TRUE)}.
 }

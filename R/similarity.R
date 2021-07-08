@@ -1,21 +1,24 @@
-#' Small Molecule Suite (SMS) compound similarity functions
-#'
-#' @param query_ids Compounds (`lspci_ids`) for which to calculate
-#'   similarity. If no target_ids are provided, the similarity of
-#'   all query compounds with each other are calculated.
-#' @param target_ids `lspci_ids` of compounds. If provided, all pairwise
-#'   similarities between query and target compounds are calculated.
-#' @name similarity_functions
-NULL
-
 #' Calculate Target Affinity Spectrum (TAS) similarity
 #'
-#' TAS asdf
+#' Computes similarity between compounds based on the targets they are binding.
+#' Binding data is compiled from different sources: Full dose-response assays,
+#' single concentration assays and literature assertions. For full description
+#' see \href{https://doi.org/10.1016/j.chembiol.2019.02.018}{Moret, N.,
+#' Clark, N.A., Hafner, M., Wang, Y., Lounkine, E., Medvedovic, M., Wang, J.,
+#' Gray, N., Jenkins, J., and Sorger, P.K. (2019). Cheminformatics Tools for
+#' Analyzing and Designing Optimized Small-Molecule Collections and Libraries.
+#' Cell Chemical Biology 26, 765-777.e3.}
 #'
-#' @rdname similarity_functions
+#' @template similarity-params-template
 #' @export
 sms_tas_similarity <- function(query_ids, target_ids, min_n = 6) {
-  query_tas <- data_tas[lspci_id == query_id, .(lspci_target_id, tas)]
+  if (!exists("sms_tas_data", envir = .GlobalEnv)) {
+    message("Loading TAS data...")
+    assign(
+      "sms_tas_data", data.table::fread("tas.csv.gz"), envir = .GlobalEnv
+    )
+  }
+  query_tas <- data_tas[lspci_id %in% query_ids, .(lspci_target_id, tas)]
   data_tas[
     ,
     .(lspci_id, lspci_target_id, tas)
@@ -43,11 +46,20 @@ sms_tas_similarity <- function(query_ids, target_ids, min_n = 6) {
 
 #' Calculate phenotypic similarity
 #'
-#' Phenotypic asdf
+#' Computes similarity between compounds based on phenotypic assays performed
+#' on them that are published in ChEMBL. The similarity metric is the Pearson
+#' correlation between the normalized results of all assays shared by both
+#' compounds.
 #'
-#' @rdname similarity_functions
+#' @template similarity-params-template
 #' @export
 sms_phenotypic_similarity <- function(query_id, min_n = 6) {
+  if (!exists("sms_phenotypic_data", envir = .GlobalEnv)) {
+    message("Loading phenotypic data...")
+    assign(
+      "sms_phenotypic_data", data.table::fread("phenotypic.csv.gz"), envir = .GlobalEnv
+    )
+  }
   query_pfps <- data_pfp[lspci_id == query_id]
   data.table::merge(
     query_pfps,
@@ -80,10 +92,18 @@ sms_phenotypic_similarity <- function(query_id, min_n = 6) {
 #'
 #' Computes the Tanimoto similarity between Morgan fingerprints.
 #'
-#' @rdname similarity_functions
+#' @template similarity-params-template
 #' @export
 sms_chemical_similarity <- function(query_id) {
-  fps <- data_fingerprints$tanimoto_all(query_id)
+  if (!exists("sms_fingerprint_data", envir = .GlobalEnv)) {
+    message("Loading fingerprint data...")
+    assign(
+      "sms_fingerprint_data",
+      morgancpp::MorganFPS$new("fingerprints.bin", from_file = TRUE),
+      envir = .GlobalEnv
+    )
+  }
+  fps <- sms_fingerprint_data$tanimoto_all(query_id)
   data.table::setDT(fps, key = "id")
   colnames(fps) <- c("lspci_id", "structural_similarity")
   fps
@@ -91,7 +111,23 @@ sms_chemical_similarity <- function(query_id) {
 
 #' Download Small Molecule Suite data
 #'
+#' Download SMS compound data from
+#' \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} to the working
+#' directory. Synapse login credentials must be saved using [synapser::synLogin()].
+#'
+#' `synLogin(email = "xxx", password = "xxx", rememberMe = TRUE)`.
+#'
 #' @export
 sms_download <- function() {
-
+  if (!requireNamespace("synapser", quietly = TRUE)) {
+    stop(
+      "The package \"synapser\" is required for downloading SMS data.",
+      "See https://github.com/Sage-Bionetworks/synapser"
+    )
+  }
+  synapser::synLogin()
+  synapser::synGet("syn25955274", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  synapser::synGet("syn25955272", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  synapser::synGet("syn25955273", downloadLocation = getwd(), ifcollision = "overwrite.local")
+  NULL
 }
