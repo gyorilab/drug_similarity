@@ -4,14 +4,14 @@
 \alias{sms_phenotypic_similarity}
 \title{Calculate phenotypic similarity}
 \usage{
-sms_phenotypic_similarity(query_id, min_n = 6)
+sms_phenotypic_similarity(query_ids, target_ids = NULL, min_n = 4)
 }
 \arguments{
-\item{query_ids}{Compounds (\code{lspci_ids}) for which to calculate
-similarity. If no target_ids are provided, the similarity of
+\item{querys}{Compounds (names or \code{lspci_ids}) for which to calculate
+similarity. If no targets are provided, the similarity of
 all query compounds with each other are calculated.}
 
-\item{target_ids}{\code{lspci_ids} of compounds. If provided, all pairwise
+\item{targets}{If provided (names or \code{lspci_ids}), all pairwise
 similarities between query and target compounds are calculated.}
 }
 \value{
@@ -29,8 +29,10 @@ to be downloaded to the working directory from
 \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} or
 automatically using the \code{\link[=sms_download]{sms_download()}} function.
 
-Compound names can be mapped to \code{lspci_ids} using the \code{lsp_compound_names}
-table from \url{https://labsyspharm.shinyapps.io/smallmoleculesuite}.
+Compound names can be provided directly to the function,
+mapped to \code{lspci_ids} using the \code{\link[=sms_compound_ids]{sms_compound_ids()}}
+function, or using the \code{lsp_compound_names} table from
+\url{https://labsyspharm.shinyapps.io/smallmoleculesuite}.
 }
 \seealso{
 \code{\link[=sms_download]{sms_download()}} for downloading SMS data

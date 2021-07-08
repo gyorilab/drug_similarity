@@ -27,13 +27,27 @@ tas_input <- synPluck(syn_parent, "lsp_tas.csv.gz") %>%
   syn() %>%
   fread()
 
+compound_name_input <- synPluck(syn_parent, "lsp_compound_names.csv.gz") %>%
+  syn() %>%
+  fread()
+
 # Warning, 5GB compressed
 fingerprint_input <- synPluck(syn_parent, "lsp_fingerprints.csv.gz") %>%
   syn() %>%
   vroom()
 
+## Wrangle compound names
+
+compound_names <- compound_name_input[
+  , rank := seq_len(.N), keyby = .(lspci_id)
+]
+
+fwrite(
+  compound_names, file.path(dir_data, "sms_compound_names.csv.gz")
+)
+
 ## Wrangle phenotypic assay and TAS data for similarity calculations
-## Throwing out any
+## Throwing out any compounds with less than 4 data points
 
 pfp <- pfp_input[
   !is.na(rscore_tr) & is.finite(rscore_tr),
@@ -43,28 +57,28 @@ pfp <- pfp_input[
     rscore_tr
   )
 ][
-  # Remove any compound with less than 6 assays
+  # Remove any compound with less than 4 assays
   ,
-  if (.N >= 6) .SD,
+  if (.N >= 4) .SD,
   keyby = .(lspci_id)
 ] %>%
   setkey(assay_id, lspci_id)
 
 fwrite(
-  pfp, file.path(dir_data, "phenotypic.csv.gz")
+  pfp, file.path(dir_data, "sms_phenotypic.csv.gz")
 )
 
 tas <- tas_input[
-  # Remove any drug with less than 6 tas values
+  # Remove any drug with less than 4 tas values
   ,
-  if (.N >= 6) .SD,
+  if (.N >= 4) .SD,
   keyby = .(lspci_id),
   .SDcols = c("lspci_target_id", "tas")
 ] %>%
   setkey(lspci_target_id, lspci_id)
 
 fwrite(
-  tas, file.path(dir_data, "tas.csv.gz")
+  tas, file.path(dir_data, "sms_tas.csv.gz")
 )
 
 ## Store fingerprints in efficient binary format
@@ -80,7 +94,7 @@ fingerprints <- MorganFPS$new(
 )
 
 fingerprints$save_file(
-  file.path(dir_data, "fingerprints.bin"),
+  file.path(dir_data, "sms_fingerprints.bin"),
   compression_level = 22
 )
 
@@ -90,9 +104,10 @@ syn_store_root <- "syn25928953"
 syn_sms_data <- synMkdir(syn_store_root, "sms")
 
 synStoreMany(
-  c(file.path(dir_data, "phenotypic.csv.gz"),
-    file.path(dir_data, "tas.csv.gz"),
-    file.path(dir_data, "fingerprints.bin")),
+  c(file.path(dir_data, "sms_phenotypic.csv.gz"),
+    file.path(dir_data, "sms_tas.csv.gz"),
+    file.path(dir_data, "sms_fingerprints.bin"),
+    file.path(dir_data, "sms_compound_names.csv.gz")),
   parentId = syn_sms_data,
   forceVersion = FALSE
 )

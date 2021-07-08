@@ -11,21 +11,33 @@
 #'
 #' @template similarity-params-template
 #' @export
-sms_tas_similarity <- function(query_ids, target_ids, min_n = 6) {
-  if (!exists("sms_tas_data", envir = .GlobalEnv)) {
+sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
+  if (!exists("sms_data_tas", envir = .GlobalEnv)) {
     message("Loading TAS data...")
     assign(
-      "sms_tas_data", data.table::fread("tas.csv.gz"), envir = .GlobalEnv
+      "sms_data_tas", data.table::fread("tas.csv.gz"), envir = .GlobalEnv
     )
   }
-  query_tas <- data_tas[lspci_id %in% query_ids, .(lspci_target_id, tas)]
-  data_tas[
-    ,
-    .(lspci_id, lspci_target_id, tas)
-  ][
+  query_ids <- convert_compound_ids(query_ids)
+  target_ids <- convert_compound_ids(target_ids)
+
+  query_tas <- sms_data_tas[
+    lspci_id %in% query_ids,
+    .(query_lspci_id = lspci_id, lspci_target_id, tas)
+  ] %>%
+    unique()
+  target_tas <- sms_data_tas[
+    if (is.null(target_ids)) TRUE else lspci_id %in% target_ids,
+    .(target_lspci_id = lspci_id, lspci_target_id, tas)
+  ] %>%
+    unique()
+  target_tas[
     query_tas,
-    on = "lspci_target_id",
-    nomatch = NULL
+    on = .(lspci_target_id > lspci_query_id),
+    nomatch = NULL,
+    allow.cartesian = TRUE
+  ][
+    query_lspci_id != target_lspci_id
   ][
     ,
     mask := tas < 10 | i.tas < 10
@@ -33,15 +45,57 @@ sms_tas_similarity <- function(query_ids, target_ids, min_n = 6) {
     ,
     if (sum(mask) >= min_n) .(
       "tas_similarity" = sum(pmin(tas[mask], i.tas[mask])) / sum(pmax(tas[mask], i.tas[mask])),
-      "n" = sum(mask),
-      "n_prior" = .N
+      "n_tas" = sum(mask),
+      "n_prior_tas" = .N
     ) else .(
       tas_similarity = double(),
-      n = integer(),
-      n_prior = integer()
+      n_tas = integer(),
+      n_prior_tas = integer()
     ),
-    by = "lspci_id"
+    by = .(query_lspci_id, target_lspci_id)
   ]
+}
+
+#' Calculate chemical similarity
+#'
+#' Computes the Tanimoto similarity between Morgan fingerprints.
+#'
+#' @template similarity-params-template
+#' @export
+sms_chemical_similarity <- function(query_ids, target_ids = NULL) {
+  if (!exists("sms_data_fingerprints", envir = .GlobalEnv)) {
+    message("Loading TAS data...")
+    assign(
+      "sms_data_fingerprints",
+      morgancpp::MorganFPS$new("fingerprints.bin", from_file = TRUE),
+      envir = .GlobalEnv
+    )
+  }
+  query_ids <- convert_compound_ids(query_ids)
+  target_ids <- convert_compound_ids(target_ids)
+
+  query_ids %>%
+    purrr::set_names() %>%
+    purrr::map(
+      ~sms_data_fingerprints$tanimoto_all(.x) %>%
+        data.table::setDT() %>% {
+          .[
+            if (is.null(target_ids)) TRUE else id %in% target_ids
+          ]
+        }
+    ) %>%
+    data.table::rbindlist(idcol = "query_lspci_id") %>% {
+      .[
+        ,
+        .(
+          query_lspci_id = as.integer(query_lspci_id),
+          target_lspci_id = id,
+          structural_similarity
+        )
+      ][
+        query_lspci_id != target_lspci_id
+      ]
+    }
 }
 
 #' Calculate phenotypic similarity
@@ -53,81 +107,51 @@ sms_tas_similarity <- function(query_ids, target_ids, min_n = 6) {
 #'
 #' @template similarity-params-template
 #' @export
-sms_phenotypic_similarity <- function(query_id, min_n = 6) {
-  if (!exists("sms_phenotypic_data", envir = .GlobalEnv)) {
+sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
+  if (!exists("sms_data_phenotypic", envir = .GlobalEnv)) {
     message("Loading phenotypic data...")
     assign(
-      "sms_phenotypic_data", data.table::fread("phenotypic.csv.gz"), envir = .GlobalEnv
+      "sms_data_phenotypic", data.table::fread("phenotypic.csv.gz"), envir = .GlobalEnv
     )
   }
-  query_pfps <- data_pfp[lspci_id == query_id]
-  data.table::merge(
+  query_ids <- convert_compound_ids(query_ids)
+  target_ids <- convert_compound_ids(target_ids)
+
+  query_pfps <- sms_data_phenotypic[
+    lspci_id %in% query_ids
+  ] %>%
+    unique()
+  target_pfps <- sms_data_phenotypic[
+    if (is.null(target_ids)) TRUE else lspci_id %in% target_ids
+  ] %>%
+    unique()
+
+  merge(
     query_pfps,
-    data_pfp,
+    target_pfps,
     by = "assay_id",
     all = FALSE,
-    sort = FALSE,
     suffixes = c("_1", "_2")
   )[
+    lspci_id_1 != lspci_id_2
+  ][
     ,
     mask := abs(rscore_tr_1) >= 2.5 | abs(rscore_tr_2) >= 2.5
   ][
     ,
     if(sum(mask) >= min_n) .(
-      "pfp_correlation" = cor(rscore_tr_1, rscore_tr_2),
-      "n" = sum(mask),
-      "n_prior" = .N
+      "phenotypic_correlation" = cor(rscore_tr_1, rscore_tr_2),
+      "n_pfp" = sum(mask),
+      "n_prior_pfp" = .N
     ) else .(
-      pfp_correlation = double(),
-      n = integer(),
-      n_prior = integer()
+      phenotypic_correlation = double(),
+      n_pfp = integer(),
+      n_prior_pfp = integer()
     ),
-    by = lspci_id_2
+    by = .(lspci_id_1, lspci_id_2)
   ] %>%
-    data.table::setnames("lspci_id_2", "lspci_id")
-}
-
-
-#' Calculate chemical similarity
-#'
-#' Computes the Tanimoto similarity between Morgan fingerprints.
-#'
-#' @template similarity-params-template
-#' @export
-sms_chemical_similarity <- function(query_id) {
-  if (!exists("sms_fingerprint_data", envir = .GlobalEnv)) {
-    message("Loading fingerprint data...")
-    assign(
-      "sms_fingerprint_data",
-      morgancpp::MorganFPS$new("fingerprints.bin", from_file = TRUE),
-      envir = .GlobalEnv
+    data.table::setnames(
+      c("lspci_id_1", "lspci_id_2"),
+      c("query_lspci_id", "target_lspci_id")
     )
-  }
-  fps <- sms_fingerprint_data$tanimoto_all(query_id)
-  data.table::setDT(fps, key = "id")
-  colnames(fps) <- c("lspci_id", "structural_similarity")
-  fps
-}
-
-#' Download Small Molecule Suite data
-#'
-#' Download SMS compound data from
-#' \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} to the working
-#' directory. Synapse login credentials must be saved using [synapser::synLogin()].
-#'
-#' `synLogin(email = "xxx", password = "xxx", rememberMe = TRUE)`.
-#'
-#' @export
-sms_download <- function() {
-  if (!requireNamespace("synapser", quietly = TRUE)) {
-    stop(
-      "The package \"synapser\" is required for downloading SMS data.",
-      "See https://github.com/Sage-Bionetworks/synapser"
-    )
-  }
-  synapser::synLogin()
-  synapser::synGet("syn25955274", downloadLocation = getwd(), ifcollision = "overwrite.local")
-  synapser::synGet("syn25955272", downloadLocation = getwd(), ifcollision = "overwrite.local")
-  synapser::synGet("syn25955273", downloadLocation = getwd(), ifcollision = "overwrite.local")
-  NULL
 }
