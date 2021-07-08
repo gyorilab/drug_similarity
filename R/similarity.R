@@ -9,17 +9,23 @@
 #' Analyzing and Designing Optimized Small-Molecule Collections and Libraries.
 #' Cell Chemical Biology 26, 765-777.e3.}
 #'
+#' In the output, `n_tas_prior` represents the number of annotated targets shared
+#' between compounds. `n_tas` is the number of annotated targets actually used
+#' for similarity calculation. It requires that at least one of the two compounds
+#' has a binding assertion < 10 for the given target.
+#'
 #' @template similarity-params-template
+#' @param min_n Minimum number of shared targets with TAS annotation
 #' @export
-sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
+sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_compound_names = FALSE) {
   if (!exists("sms_data_tas", envir = .GlobalEnv)) {
     message("Loading TAS data...")
     assign(
       "sms_data_tas", data.table::fread("tas.csv.gz"), envir = .GlobalEnv
     )
   }
-  query_ids <- convert_compound_ids(query_ids)
-  target_ids <- convert_compound_ids(target_ids)
+  query_ids <- sms_compound_ids(query_ids)
+  target_ids <- sms_compound_ids(target_ids)
 
   query_tas <- sms_data_tas[
     lspci_id %in% query_ids,
@@ -31,9 +37,9 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
     .(target_lspci_id = lspci_id, lspci_target_id, tas)
   ] %>%
     unique()
-  target_tas[
+  res <- target_tas[
     query_tas,
-    on = .(lspci_target_id > lspci_query_id),
+    on = .(lspci_target_id),
     nomatch = NULL,
     allow.cartesian = TRUE
   ][
@@ -54,6 +60,9 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
     ),
     by = .(query_lspci_id, target_lspci_id)
   ]
+  if (show_compound_names)
+    res <- merge_compound_names(res)
+  res
 }
 
 #' Calculate chemical similarity
@@ -62,7 +71,7 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
 #'
 #' @template similarity-params-template
 #' @export
-sms_chemical_similarity <- function(query_ids, target_ids = NULL) {
+sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_names = FALSE) {
   if (!exists("sms_data_fingerprints", envir = .GlobalEnv)) {
     message("Loading TAS data...")
     assign(
@@ -71,10 +80,10 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL) {
       envir = .GlobalEnv
     )
   }
-  query_ids <- convert_compound_ids(query_ids)
-  target_ids <- convert_compound_ids(target_ids)
+  query_ids <- sms_compound_ids(query_ids)
+  target_ids <- sms_compound_ids(target_ids)
 
-  query_ids %>%
+  res <- query_ids %>%
     purrr::set_names() %>%
     purrr::map(
       ~sms_data_fingerprints$tanimoto_all(.x) %>%
@@ -96,6 +105,9 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL) {
         query_lspci_id != target_lspci_id
       ]
     }
+  if (show_compound_names)
+    res <- merge_compound_names(res)
+  res
 }
 
 #' Calculate phenotypic similarity
@@ -106,16 +118,17 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL) {
 #' compounds.
 #'
 #' @template similarity-params-template
+#' @param min_n Minimum number of shared assays between compounds
 #' @export
-sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
+sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_compound_names = FALSE) {
   if (!exists("sms_data_phenotypic", envir = .GlobalEnv)) {
     message("Loading phenotypic data...")
     assign(
       "sms_data_phenotypic", data.table::fread("phenotypic.csv.gz"), envir = .GlobalEnv
     )
   }
-  query_ids <- convert_compound_ids(query_ids)
-  target_ids <- convert_compound_ids(target_ids)
+  query_ids <- sms_compound_ids(query_ids)
+  target_ids <- sms_compound_ids(target_ids)
 
   query_pfps <- sms_data_phenotypic[
     lspci_id %in% query_ids
@@ -126,7 +139,7 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
   ] %>%
     unique()
 
-  merge(
+  res <- merge(
     query_pfps,
     target_pfps,
     by = "assay_id",
@@ -154,4 +167,7 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4) {
       c("lspci_id_1", "lspci_id_2"),
       c("query_lspci_id", "target_lspci_id")
     )
+  if (show_compound_names)
+    res <- merge_compound_names(res)
+  res
 }

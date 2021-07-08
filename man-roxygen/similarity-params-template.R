@@ -1,9 +1,10 @@
-#' @param querys Compounds (names or `lspci_ids`) for which to calculate
-#'   similarity. If no targets are provided, the similarity of
-#'   all query compounds with each other are calculated.
-#' @param targets If provided (names or `lspci_ids`), all pairwise
+#' @param query_ids Compounds (names or `lspci_ids`) for which to calculate
+#'   similarity. If no targets are provided, the pairwise similarity of
+#'   the query compounds with all other compounds is calculated.
+#' @param target_ids If provided (names or `lspci_ids`), all pairwise
 #'   similarities between query and target compounds are calculated.
-#' @details Before similarity functions can be used, compound data needs
+#' @param show_compound_names Add columns with compound names to output
+#' @details Before similarity functions can be used compound data needs
 #'   to be downloaded to the working directory from
 #'   \href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} or
 #'   automatically using the [sms_download()] function.

@@ -20,7 +20,7 @@ find_compound_ids <- function(compound_names) {
           original_query = magrittr::inset(original_query, matches, query)
         )
       ]
-    }, .init = copy(sms_data_compound_names)[
+    }, .init = data.table::copy(sms_data_compound_names)[
       , `:=`(matched = FALSE, original_query = NA_character_)
     ]
   )
@@ -28,7 +28,7 @@ find_compound_ids <- function(compound_names) {
     matched == TRUE
   ][
     ,
-    match_len := str_length(name)
+    match_len := stringr::str_length(name)
   ][
     order(
       match_len
@@ -43,6 +43,11 @@ find_compound_ids <- function(compound_names) {
 }
 
 merge_compound_names <- function(df) {
+  if (!exists("sms_data_compounds", envir = .GlobalEnv)) {
+    assign(
+      "sms_data_compounds", sms_data_compound_names[rank == 1, .(lspci_id, name)], envir = .GlobalEnv
+    )
+  }
   purrr::reduce(
     purrr::array_branch(stringr::str_match(names(df), "^(.*)lspci_id$"), margin = 1),
     function(df, match) {
@@ -52,10 +57,10 @@ merge_compound_names <- function(df) {
         return(df)
       merge(
         df,
-        data_compounds[lspci_id %in% df[[lspci_id_col]]][
-          , .(lspci_id, pref_name)
+        sms_data_compounds[lspci_id %in% df[[lspci_id_col]]][
+          , .(lspci_id, name)
         ] %>%
-          data.table::setnames("pref_name", compound_col),
+          data.table::setnames("name", compound_col),
         by.x = lspci_id_col, by.y = "lspci_id", all = FALSE
       )
     }, .init = df
@@ -73,7 +78,7 @@ sms_compound_ids <- function(ids) {
     # Assume it's already lspci_ids
     purrr::set_names(ids)
   else {
-    find_compound_ids(ids)[["lspci_id"]] %>%
+    find_compound_ids(ids) %>%
       with(purrr::set_names(lspci_id, original_query))
   }
 }
