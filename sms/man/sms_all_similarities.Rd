@@ -2,13 +2,15 @@
 % Please edit documentation in R/similarity.R
 \name{sms_all_similarities}
 \alias{sms_all_similarities}
-\title{Calculate all similarities into a single table}
+\title{Calculate all similarities in a single table}
 \usage{
 sms_all_similarities(
   query_ids,
   target_ids = NULL,
   min_n_pfp = 4L,
-  min_n_tas = 4L
+  min_n_tas = 4L,
+  include_structure_only = FALSE,
+  show_compound_names = FALSE
 )
 }
 \arguments{
@@ -24,6 +26,8 @@ similarities between query and target compounds are calculated.}
 \item{min_n_tas}{Minimum number of shared targets with TAS annotation}
 
 \item{show_compound_names}{Add columns with compound names to output}
+
+\item{exclude_structure_only}{Include similarity of compound pairs where only structure is annotated}
 }
 \value{
 A 3 column data frame with query_id, target_id, and similarity

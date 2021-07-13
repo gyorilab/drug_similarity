@@ -73,7 +73,7 @@ merge_compound_names <- function(df) {
       "sms_data_compounds", sms_data_compound_names[rank == 1, .(lspci_id, name)], envir = .GlobalEnv
     )
   }
-  purrr::reduce(
+  res <- purrr::reduce(
     purrr::array_branch(stringr::str_match(names(df), "^(.*)lspci_id$"), margin = 1),
     function(df, match) {
       lspci_id_col <- match[1]
@@ -87,15 +87,23 @@ merge_compound_names <- function(df) {
         ] %>%
           data.table::copy() %>%
           data.table::setnames("name", compound_col),
-        by.x = lspci_id_col, by.y = "lspci_id", all = FALSE
+        by.x = lspci_id_col, by.y = "lspci_id", all.x = TRUE, all.y = FALSE
       )
     }, .init = df
   )
+  similarity_cols <- c(
+    "tas_similarity", "structural_similarity", "phenotypic_correlation"
+  )
+  res <- dplyr::relocate(
+    res, ends_with("compound"), ends_with("lspci_id"), any_of(similarity_cols)
+  )
+  res
 }
 
 #' Convert compound names to SMS compound IDs (lspci_id)
 #'
-#' @returns
+#' @returns A named vector with lspci_ids as values and corresponding queries
+#'   as names
 #' @export
 sms_compound_ids <- function(ids) {
   if (is.null(ids))

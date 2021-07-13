@@ -28,7 +28,8 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
     )
   }
   query_ids <- sms_compound_ids(query_ids)
-  target_ids <- sms_compound_ids(target_ids)
+  target_ids <- sms_compound_ids(target_ids) %>%
+    remove_duplicates(query_ids)
 
   query_tas <- sms_data_tas[
     lspci_id %in% query_ids,
@@ -87,7 +88,9 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
     )
   }
   query_ids <- sms_compound_ids(query_ids)
-  target_ids <- sms_compound_ids(target_ids)
+  target_ids <- sms_compound_ids(target_ids) %>%
+    remove_duplicates(query_ids)
+  check_number_comparisons(query_ids, target_ids)
 
   res <- sms_data_fingerprints$tanimoto_subset(query_ids, target_ids)
   names(res) <- c("query_lspci_id", "target_lspci_id", "structural_similarity")
@@ -117,7 +120,9 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, s
     )
   }
   query_ids <- sms_compound_ids(query_ids)
-  target_ids <- sms_compound_ids(target_ids)
+  target_ids <- sms_compound_ids(target_ids) %>%
+    remove_duplicates(query_ids)
+  check_number_comparisons(query_ids, target_ids)
 
   query_pfps <- sms_data_phenotypic[
     lspci_id %in% query_ids
@@ -171,32 +176,48 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, s
 #' @template similarity-params-template
 #' @param min_n_pfp Minimum number of shared assays between compounds
 #' @param min_n_tas Minimum number of shared targets with TAS annotation
-#' @param exclude_structure_only Exclude compound pairs where only structure is annotated
+#' @param exclude_structure_only Include similarity of compound pairs where only structure is annotated
 #' @export
 sms_all_similarities <- function(
   query_ids, target_ids = NULL,
   min_n_pfp = 4L,
   min_n_tas = 4L,
-  exclude_structure_only = TRUE
+  include_structure_only = FALSE,
+  show_compound_names = FALSE
 ) {
-  similarity_cols <- c(
-    "tas_similarity", "structural_similarity", "phenotypic_correlation"
-  )
   similarities <- merge(
     sms_tas_similarity(query_ids, target_ids, min_n = min_n_tas),
     sms_chemical_similarity(query_ids, target_ids),
     by = c("target_lspci_id", "query_lspci_id"),
-    all = TRUE
+    all.x = TRUE,
+    all.y = include_structure_only
   ) %>%
     merge(
       sms_phenotypic_similarity(query_ids, target_ids, min_n = min_n_pfp),
       all = TRUE,
       by = c("target_lspci_id", "query_lspci_id")
-    ) %>%
-    merge_compound_names() %>%
-    dplyr::relocate(
-      query_compound, target_compound, all_of(similarity_cols)
     )
+  if (show_compound_names)
+    similarities <- merge_compound_names(similarities)
   similarities
 }
 
+DEFAULT_QUERY_LIMIT = 1e9L
+check_number_comparisons <- function(x, y) {
+  if (!is.null(getOption("sms_large_queries")))
+    return()
+  n <- if (is.null(y)) length(x) * sms_data_fingerprints$n() else length(x) * length(y)
+  message(n)
+  if (n > DEFAULT_QUERY_LIMIT)
+    stop(
+      "Requested more than ", DEFAULT_QUERY_LIMIT, " comparisons. ",
+      "This is extremely slow. To allow such large queries run ",
+      "`options(sms_large_queries = TRUE)`"
+    )
+}
+
+remove_duplicates <- function(x, y) {
+  if (is.null(x))
+    return(x)
+  setdiff(x, y)
+}

@@ -10,3 +10,6 @@
 [.]gz$
 [.]bin$
 ^synapse_auth_token$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -7,7 +7,8 @@
 sms_compound_ids(ids)
 }
 \value{
-
+A named vector with lspci_ids as values and corresponding queries
+as names
 }
 \description{
 Convert compound names to SMS compound IDs (lspci_id)
