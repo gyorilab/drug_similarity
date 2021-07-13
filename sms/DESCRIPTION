@@ -23,6 +23,7 @@ Imports:
     purrr,
     stringr,
     magrittr,
-    R.utils
+    R.utils,
+    dplyr
 Remotes:
     labsyspharm/morgancpp

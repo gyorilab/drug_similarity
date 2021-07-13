@@ -9,3 +9,4 @@
 ^data$
 [.]gz$
 [.]bin$
+^synapse_auth_token$

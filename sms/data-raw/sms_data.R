@@ -6,7 +6,7 @@ library(here)
 library(synapser)
 library(synExtra)
 
-dir_data <- here("data")
+dir_data <- here("sms_data")
 dir.create(dir_data)
 
 synLogin()

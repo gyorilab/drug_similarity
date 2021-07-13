@@ -79,7 +79,7 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
 #' @export
 sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_names = FALSE) {
   if (!exists("sms_data_fingerprints", envir = .GlobalEnv)) {
-    message("Loading TAS data...")
+    message("Loading fingerprint data...")
     assign(
       "sms_data_fingerprints",
       morgancpp::MorganFPS$new("sms_fingerprints.bin", from_file = TRUE),
@@ -89,28 +89,8 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
   query_ids <- sms_compound_ids(query_ids)
   target_ids <- sms_compound_ids(target_ids)
 
-  res <- query_ids %>%
-    purrr::set_names() %>%
-    purrr::map(
-      ~sms_data_fingerprints$tanimoto_all(.x) %>%
-        data.table::setDT() %>% {
-          .[
-            if (is.null(target_ids)) TRUE else id %in% target_ids
-          ]
-        }
-    ) %>%
-    data.table::rbindlist(idcol = "query_lspci_id") %>% {
-      .[
-        ,
-        .(
-          query_lspci_id = as.integer(query_lspci_id),
-          target_lspci_id = id,
-          structural_similarity
-        )
-      ][
-        query_lspci_id != target_lspci_id
-      ]
-    }
+  res <- sms_data_fingerprints$tanimoto_subset(query_ids, target_ids)
+  names(res) <- c("query_lspci_id", "target_lspci_id", "structural_similarity")
   if (show_compound_names)
     res <- merge_compound_names(res)
   res
@@ -180,3 +160,43 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, s
     res <- merge_compound_names(res)
   res
 }
+
+#' Calculate all similarities in a single table
+#'
+#' Computes similarity between compounds using all metrics available.
+#'
+#' @examples
+#' sms_all_similarities(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE)
+#'
+#' @template similarity-params-template
+#' @param min_n_pfp Minimum number of shared assays between compounds
+#' @param min_n_tas Minimum number of shared targets with TAS annotation
+#' @param exclude_structure_only Exclude compound pairs where only structure is annotated
+#' @export
+sms_all_similarities <- function(
+  query_ids, target_ids = NULL,
+  min_n_pfp = 4L,
+  min_n_tas = 4L,
+  exclude_structure_only = TRUE
+) {
+  similarity_cols <- c(
+    "tas_similarity", "structural_similarity", "phenotypic_correlation"
+  )
+  similarities <- merge(
+    sms_tas_similarity(query_ids, target_ids, min_n = min_n_tas),
+    sms_chemical_similarity(query_ids, target_ids),
+    by = c("target_lspci_id", "query_lspci_id"),
+    all = TRUE
+  ) %>%
+    merge(
+      sms_phenotypic_similarity(query_ids, target_ids, min_n = min_n_pfp),
+      all = TRUE,
+      by = c("target_lspci_id", "query_lspci_id")
+    ) %>%
+    merge_compound_names() %>%
+    dplyr::relocate(
+      query_compound, target_compound, all_of(similarity_cols)
+    )
+  similarities
+}
+

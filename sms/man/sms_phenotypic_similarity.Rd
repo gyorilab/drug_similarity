@@ -34,8 +34,8 @@ compounds.
 }
 \details{
 Before similarity functions can be used compound data needs
-to be downloaded to the working directory from
-\href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse} or
+to be downloaded to the working directory from the
+\href{https://www.synapse.org/#!Synapse:syn25955270}{Synapse repository} or
 automatically using the \code{\link[=sms_download]{sms_download()}} function.
 
 Compound names can be provided directly to the function,
@@ -51,6 +51,7 @@ sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names =
 \code{\link[=sms_download]{sms_download()}} for downloading SMS data
 
 Other similarity functions: 
+\code{\link{sms_all_similarities}()},
 \code{\link{sms_chemical_similarity}()},
 \code{\link{sms_tas_similarity}()}
 }
