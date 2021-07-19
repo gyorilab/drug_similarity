@@ -111,28 +111,28 @@ sms_tas_similarity(c("ruxolitinib", "tofacitinib"), c("baricitinib", "fedratinib
 sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
   head(n = 10)
 #> Loading fingerprint data...
-#>    query_compound            target_compound target_lspci_id query_lspci_id
-#> 1     RUXOLITINIB                       <NA>               1          66153
-#> 2     TOFACITINIB                       <NA>               1          78036
-#> 3     TOFACITINIB    TETRAMETHYLAMMONIUM ION               2          78036
-#> 4     RUXOLITINIB    TETRAMETHYLAMMONIUM ION               2          66153
-#> 5     RUXOLITINIB                       <NA>               3          66153
-#> 6     TOFACITINIB                       <NA>               3          78036
-#> 7     RUXOLITINIB          TRIMETHYLAMMONIUM               4          66153
-#> 8     TOFACITINIB          TRIMETHYLAMMONIUM               4          78036
-#> 9     TOFACITINIB Trimethyl-sulfonium iodide               5          78036
-#> 10    RUXOLITINIB Trimethyl-sulfonium iodide               5          66153
-#>    structural_similarity
-#> 1             0.00000000
-#> 2             0.00000000
-#> 3             0.01724138
-#> 4             0.00000000
-#> 5             0.01851852
-#> 6             0.01724138
-#> 7             0.00000000
-#> 8             0.05357143
-#> 9             0.01724138
-#> 10            0.00000000
+#>     query_compound            target_compound target_lspci_id query_lspci_id
+#>  1:    RUXOLITINIB                       <NA>               1          66153
+#>  2:    TOFACITINIB                       <NA>               1          78036
+#>  3:    RUXOLITINIB    TETRAMETHYLAMMONIUM ION               2          66153
+#>  4:    TOFACITINIB    TETRAMETHYLAMMONIUM ION               2          78036
+#>  5:    RUXOLITINIB                       <NA>               3          66153
+#>  6:    TOFACITINIB                       <NA>               3          78036
+#>  7:    RUXOLITINIB          TRIMETHYLAMMONIUM               4          66153
+#>  8:    TOFACITINIB          TRIMETHYLAMMONIUM               4          78036
+#>  9:    RUXOLITINIB Trimethyl-sulfonium iodide               5          66153
+#> 10:    TOFACITINIB Trimethyl-sulfonium iodide               5          78036
+#>     structural_similarity
+#>  1:            0.00000000
+#>  2:            0.00000000
+#>  3:            0.00000000
+#>  4:            0.01724138
+#>  5:            0.01851852
+#>  6:            0.01724138
+#>  7:            0.00000000
+#>  8:            0.05357143
+#>  9:            0.00000000
+#> 10:            0.01724138
 ```
 
 ### Phenotypic similarity

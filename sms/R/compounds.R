@@ -34,6 +34,14 @@ find_compound_ids <- function(compound_names) {
       , `:=`(match_prop = -1, original_query = NA_character_)
     ]
   )
+  unmatched <- setdiff(compound_names, key_matches[["original_query"]])
+  if (length(unmatched) > 0) {
+    warning(
+      "No matches for ", length(unmatched), " queries: ",
+      paste("\"", head(unmatched, n = 10), "\"", sep = "", collapse = " "),
+      if (length(unmatched) > 10) " ..."
+    )
+  }
   # Only return first match of each original query. Should be highest quality match
   data.table::setorder(key_matches, -match_prop)[
     match_prop > 0

@@ -94,6 +94,7 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
 
   res <- sms_data_fingerprints$tanimoto_subset(query_ids, target_ids)
   names(res) <- c("query_lspci_id", "target_lspci_id", "structural_similarity")
+  data.table::setDT(res)
   if (show_compound_names)
     res <- merge_compound_names(res)
   res
