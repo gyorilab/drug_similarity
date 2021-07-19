@@ -24,6 +24,7 @@ Imports:
     stringr,
     magrittr,
     R.utils,
-    dplyr
+    dplyr,
+    fst
 Remotes:
     labsyspharm/morgancpp

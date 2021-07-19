@@ -2,6 +2,8 @@ library(tidyverse)
 library(data.table)
 library(morgancpp)
 library(vroom)
+library(stringr)
+library(fst)
 library(here)
 library(synapser)
 library(synExtra)
@@ -40,10 +42,11 @@ fingerprint_input <- synPluck(syn_parent, "lsp_fingerprints.csv.gz") %>%
 
 compound_names <- compound_name_input[
   , rank := seq_len(.N), keyby = .(lspci_id)
-]
+][, len := str_length(name)] %>%
+  setkey(lspci_id)
 
-fwrite(
-  compound_names, file.path(dir_data, "sms_compound_names.csv.gz")
+write_fst(
+  compound_names, file.path(dir_data, "sms_compound_names.fst"), compress = 100
 )
 
 ## Wrangle phenotypic assay and TAS data for similarity calculations
@@ -64,8 +67,8 @@ pfp <- pfp_input[
 ] %>%
   setkey(assay_id, lspci_id)
 
-fwrite(
-  pfp, file.path(dir_data, "sms_phenotypic.csv.gz")
+write_fst(
+  pfp, file.path(dir_data, "sms_phenotypic.fst"), compress = 100
 )
 
 tas <- tas_input[
@@ -77,8 +80,8 @@ tas <- tas_input[
 ] %>%
   setkey(lspci_target_id, lspci_id)
 
-fwrite(
-  tas, file.path(dir_data, "sms_tas.csv.gz")
+write_fst(
+  tas, file.path(dir_data, "sms_tas.fst"), compress = 100
 )
 
 ## Store fingerprints in efficient binary format
@@ -104,10 +107,10 @@ syn_store_root <- "syn25928953"
 syn_sms_data <- synMkdir(syn_store_root, "sms")
 
 synStoreMany(
-  c(file.path(dir_data, "sms_phenotypic.csv.gz"),
-    file.path(dir_data, "sms_tas.csv.gz"),
+  c(file.path(dir_data, "sms_phenotypic.fst"),
+    file.path(dir_data, "sms_tas.fst"),
     file.path(dir_data, "sms_fingerprints.bin"),
-    file.path(dir_data, "sms_compound_names.csv.gz")),
+    file.path(dir_data, "sms_compound_names.fst")),
   parentId = syn_sms_data,
   forceVersion = FALSE
 )

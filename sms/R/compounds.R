@@ -3,11 +3,7 @@ find_compound_ids <- function(compound_names) {
     message("Loading compound name data...")
     assign(
       "sms_data_compound_names",
-      data.table::fread("sms_compound_names.csv.gz")[
-        # Adding length of name for fast calculation of the match proportion
-        , len := stringr::str_length(name)
-      ] %>%
-        data.table::setkey(lspci_id),
+      fst::read_fst("sms_compound_names.fst", as.data.table = TRUE),
       envir = .GlobalEnv
     )
   }
@@ -42,13 +38,6 @@ find_compound_ids <- function(compound_names) {
   data.table::setorder(key_matches, -match_prop)[
     match_prop > 0
   ][
-  #   ,
-  #   match_len := stringr::str_length(name)
-  # ][
-  #   order(
-  #     match_len
-  #   )
-  # ][
     ,
     head(.SD, n = 1),
     by = .(original_query),
@@ -61,10 +50,7 @@ merge_compound_names <- function(df) {
     message("Loading compound name data...")
     assign(
       "sms_data_compound_names",
-      data.table::fread("sms_compound_names.csv.gz")[
-        # Adding length of name for fast calculation of the match proportion
-        , len := stringr::str_length(name)
-      ],
+      fst::read_fst("sms_compound_names.csv.gz", as.data.table = TRUE),
       envir = .GlobalEnv
     )
   }
@@ -73,24 +59,20 @@ merge_compound_names <- function(df) {
       "sms_data_compounds", sms_data_compound_names[rank == 1, .(lspci_id, name)], envir = .GlobalEnv
     )
   }
-  res <- purrr::reduce(
-    purrr::array_branch(stringr::str_match(names(df), "^(.*)lspci_id$"), margin = 1),
-    function(df, match) {
-      lspci_id_col <- match[1]
-      compound_col <- paste0(match[2], "compound")
-      if (any(is.na(c(lspci_id_col, compound_col))))
-        return(df)
-      merge(
-        df,
-        sms_data_compounds[
-          , .(lspci_id, name)
-        ] %>%
-          data.table::copy() %>%
-          data.table::setnames("name", compound_col),
-        by.x = lspci_id_col, by.y = "lspci_id", all.x = TRUE, all.y = FALSE
-      )
-    }, .init = df
-  )
+  # Merging compound names for every column that contains _lspci_id
+  res <- df
+  for (match in purrr::array_branch(stringr::str_match(names(df), "^(.*)lspci_id$"), margin = 1)) {
+    lspci_id_col <- match[1]
+    compound_col <- paste0(match[2], "compound")
+    if (any(is.na(c(lspci_id_col, compound_col))))
+      next
+    res <- merge(
+      res,
+      sms_data_compounds,
+      by.x = lspci_id_col, by.y = "lspci_id", all.x = TRUE, all.y = FALSE
+    )
+    data.table::setnames(res, "name", compound_col)
+  }
   similarity_cols <- c(
     "tas_similarity", "structural_similarity", "phenotypic_correlation"
   )

@@ -24,7 +24,7 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
   if (!exists("sms_data_tas", envir = .GlobalEnv)) {
     message("Loading TAS data...")
     assign(
-      "sms_data_tas", data.table::fread("sms_tas.csv.gz"), envir = .GlobalEnv
+      "sms_data_tas", fst::read_fst("sms_tas.fst", as.data.table = TRUE), envir = .GlobalEnv
     )
   }
   query_ids <- sms_compound_ids(query_ids)
@@ -116,7 +116,7 @@ sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, s
   if (!exists("sms_data_phenotypic", envir = .GlobalEnv)) {
     message("Loading phenotypic data...")
     assign(
-      "sms_data_phenotypic", data.table::fread("sms_phenotypic.csv.gz"), envir = .GlobalEnv
+      "sms_data_phenotypic", fst::read_fst("sms_phenotypic.fst", as.data.table = TRUE), envir = .GlobalEnv
     )
   }
   query_ids <- sms_compound_ids(query_ids)
@@ -207,7 +207,6 @@ check_number_comparisons <- function(x, y) {
   if (!is.null(getOption("sms_large_queries")))
     return()
   n <- if (is.null(y)) length(x) * sms_data_fingerprints$n() else length(x) * length(y)
-  message(n)
   if (n > DEFAULT_QUERY_LIMIT)
     stop(
       "Requested more than ", DEFAULT_QUERY_LIMIT, " comparisons. ",
