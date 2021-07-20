@@ -98,7 +98,7 @@ merge_compound_names <- function(df) {
 sms_compound_ids <- function(ids) {
   if (is.null(ids))
     NULL
-  else if (is.numeric(ids))
+  else if (is.numeric(ids) || is.integer(ids))
     # Assume it's already lspci_ids
     purrr::set_names(ids)
   else {

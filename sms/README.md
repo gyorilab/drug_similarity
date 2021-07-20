@@ -44,6 +44,17 @@ sms_download()
 #> NULL
 ```
 
+### Compound names
+
+Queries can either be `lspci_ids` ([mappings from names to `lspci_id`
+are on Synapse](https://www.synapse.org/#!Synapse:syn24874056)) or
+compound names.
+
+Compound name queries are matched with the compound name database by
+finding the name with the largest overlapping substring.
+
+### Similarity functions
+
 Once the data are downloaded we can query compound similarities. If only
 a single vector of compound names is provided, these compounds will be
 compared to all other compounds in the SMS data set.
@@ -53,7 +64,7 @@ the data have to be loaded into memory first.
 
 Here we show the first 10 lines of the result data frames.
 
-### Target similarity
+#### Target similarity
 
 ``` r
 sms_tas_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
@@ -105,7 +116,7 @@ sms_tas_similarity(c("ruxolitinib", "tofacitinib"), c("baricitinib", "fedratinib
 #> 4:   291         453
 ```
 
-### Chemical structure similarity
+#### Chemical structure similarity
 
 ``` r
 sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
@@ -135,7 +146,7 @@ sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = T
 #> 10:            0.01724138
 ```
 
-### Phenotypic similarity
+#### Phenotypic similarity
 
 ``` r
 sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
@@ -157,7 +168,7 @@ sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names =
 #> 6:            -0.30492308     4           4
 ```
 
-### All similarity metrics
+#### All similarity metrics
 
 Alternatively, the similarity metrics can be computed all at once into a
 single table:
