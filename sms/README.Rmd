@@ -1,0 +1,105 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# Small Molecule Suite compound similarity
+
+R package for computing chemical, target (TAS) and phenotypic similarities
+between compounds.
+
+## Installation
+
+The dependencies `synapser` and `morgancpp` might need to be installed
+manually from https://github.com/Sage-Bionetworks/synapser and
+https://github.com/labsyspharm/morgancpp.
+
+```{r installation, echo=TRUE, eval=FALSE}
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("clemenshug/drug_similarity", ref = "sms", subdir = "sms")
+```
+
+## Examples
+
+If this is the first time running the package, the data must be downloaded in
+the working directory first. They can either be downloaded manually from the
+[Synapse repository](https://www.synapse.org/#!Synapse:syn25955270) to the working
+directory or by using the `sms_download()` function.
+
+Synapse login credentials must be saved using `synapser::synLogin(..., rememberMe = TRUE)`.
+
+```{r load}
+library(tidyverse)
+library(drug.similarity)
+sms_download()
+```
+
+### Compound names
+
+Queries can either be `lspci_ids` ([mappings from names to `lspci_id` are on Synapse](https://www.synapse.org/#!Synapse:syn24874056)) or compound names.
+
+Compound name queries are matched with the compound name database by finding the
+name with the largest overlapping substring.
+
+### Similarity functions
+
+Once the data are downloaded we can query compound similarities. If only a single
+vector of compound names is provided, these compounds will be compared to all
+other compounds in the SMS data set.
+
+Running these functions for the first time might take a while, because the data
+have to be loaded into memory first.
+
+Here we show the first 10 lines of the result data frames.
+
+#### Target similarity
+
+```{r tas}
+sms_tas_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
+  head(n = 10)
+```
+
+Alternatively, we might only be interested in the similarity between our two
+queries and another set of compounds.
+
+When two vectors of compounds are passed to the similarity functions, all
+pairwise similarities between the two compound sets are calculated.
+
+```{r tas_2}
+sms_tas_similarity(c("ruxolitinib", "tofacitinib"), c("baricitinib", "fedratinib"), show_compound_names = TRUE) %>%
+  head(n = 10)
+```
+
+#### Chemical structure similarity
+
+```{r chemical}
+sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
+  head(n = 10)
+```
+
+#### Phenotypic similarity
+
+```{r phenotypic}
+sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
+  head(n = 10)
+```
+
+#### All similarity metrics
+
+Alternatively, the similarity metrics can be computed all at once into a single
+table:
+
+```{r all}
+sms_all_similarities(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
+  head(n = 10)
+```
