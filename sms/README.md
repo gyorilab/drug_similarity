@@ -40,7 +40,6 @@ library(tidyverse)
 #> x dplyr::lag()    masks stats::lag()
 library(drug.similarity)
 sms_download()
-#> Welcome, Clemens Hug!
 #> NULL
 ```
 
@@ -69,8 +68,8 @@ Here we show the first 10 lines of the result data frames.
 ``` r
 sms_tas_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
   head(n = 10)
-#> Loading TAS data...
-#> Loading compound name data...
+#> Loading sms_data_tas...
+#> Loading sms_data_compound_names...
 #>     query_compound target_compound target_lspci_id query_lspci_id
 #>  1:    RUXOLITINIB    ELLAGIC ACID            2373          66153
 #>  2:    TOFACITINIB    ELLAGIC ACID            2373          78036
@@ -121,7 +120,7 @@ sms_tas_similarity(c("ruxolitinib", "tofacitinib"), c("baricitinib", "fedratinib
 ``` r
 sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
   head(n = 10)
-#> Loading fingerprint data...
+#> Loading sms_data_fingerprints...
 #>     query_compound            target_compound target_lspci_id query_lspci_id
 #>  1:    RUXOLITINIB                       <NA>               1          66153
 #>  2:    TOFACITINIB                       <NA>               1          78036
@@ -151,7 +150,7 @@ sms_chemical_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = T
 ``` r
 sms_phenotypic_similarity(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE) %>%
   head(n = 10)
-#> Loading phenotypic data...
+#> Loading sms_data_phenotypic...
 #>    query_compound target_compound target_lspci_id query_lspci_id
 #> 1:    RUXOLITINIB      VORINOSTAT            4870          66153
 #> 2:    TOFACITINIB      NSC-401077           31506          78036
@@ -193,7 +192,7 @@ sms_all_similarities(c("ruxolitinib", "tofacitinib"), show_compound_names = TRUE
 #>  3:            3261      0.3289474            0.10447761                     NA
 #>  4:            4623      0.3157895            0.08571429                     NA
 #>  5:            4646      0.2572115            0.06944444                     NA
-#>  6:            4870             NA                    NA             0.01585451
+#>  6:            4870             NA            0.05555556             0.01585451
 #>  7:            5052      0.3308081            0.06944444                     NA
 #>  8:            6998      0.4615385            0.08219178                     NA
 #>  9:            7551      0.2300000            0.08219178                     NA

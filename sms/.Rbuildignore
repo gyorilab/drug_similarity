@@ -9,6 +9,7 @@
 ^data$
 [.]gz$
 [.]bin$
+[.]fst$
 ^synapse_auth_token$
 ^_pkgdown\.yml$
 ^docs$

@@ -14,7 +14,7 @@ sms_download <- function() {
       "See https://github.com/Sage-Bionetworks/synapser"
     )
   }
-  synapser::synLogin()
+  synapser::synLogin(silent = TRUE)
   synapser::synGet("syn25992641", downloadLocation = getwd(), ifcollision = "overwrite.local")
   synapser::synGet("syn25955274", downloadLocation = getwd(), ifcollision = "overwrite.local")
   synapser::synGet("syn25992639", downloadLocation = getwd(), ifcollision = "overwrite.local")

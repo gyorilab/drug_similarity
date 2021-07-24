@@ -1,12 +1,6 @@
 find_compound_ids <- function(compound_names) {
-  if (!exists("sms_data_compound_names", envir = .GlobalEnv)) {
-    message("Loading compound name data...")
-    assign(
-      "sms_data_compound_names",
-      fst::read_fst("sms_compound_names.fst", as.data.table = TRUE),
-      envir = .GlobalEnv
-    )
-  }
+  load_data("compound_names")
+
   if (is.null(compound_names))
     return(NULL)
   key_matches <- purrr::reduce(
@@ -54,19 +48,13 @@ find_compound_ids <- function(compound_names) {
 }
 
 merge_compound_names <- function(df) {
-  if (!exists("sms_data_compound_names", envir = .GlobalEnv)) {
-    message("Loading compound name data...")
-    assign(
-      "sms_data_compound_names",
-      fst::read_fst("sms_compound_names.csv.gz", as.data.table = TRUE),
-      envir = .GlobalEnv
-    )
-  }
+  load_data("compound_names")
   if (!exists("sms_data_compounds", envir = .GlobalEnv)) {
     assign(
       "sms_data_compounds", sms_data_compound_names[rank == 1, .(lspci_id, name)], envir = .GlobalEnv
     )
   }
+
   # Merging compound names for every column that contains _lspci_id
   res <- df
   for (match in purrr::array_branch(stringr::str_match(names(df), "^(.*)lspci_id$"), margin = 1)) {

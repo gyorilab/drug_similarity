@@ -21,12 +21,8 @@
 #' @param min_n Minimum number of shared targets with TAS annotation
 #' @export
 sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_compound_names = FALSE) {
-  if (!exists("sms_data_tas", envir = .GlobalEnv)) {
-    message("Loading TAS data...")
-    assign(
-      "sms_data_tas", fst::read_fst("sms_tas.fst", as.data.table = TRUE), envir = .GlobalEnv
-    )
-  }
+  load_data("tas")
+
   query_ids <- sms_compound_ids(query_ids)
   target_ids <- sms_compound_ids(target_ids) %>%
     remove_duplicates(query_ids)
@@ -79,14 +75,8 @@ sms_tas_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_com
 #' @template similarity-params-template
 #' @export
 sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_names = FALSE) {
-  if (!exists("sms_data_fingerprints", envir = .GlobalEnv)) {
-    message("Loading fingerprint data...")
-    assign(
-      "sms_data_fingerprints",
-      morgancpp::MorganFPS$new("sms_fingerprints.bin", from_file = TRUE),
-      envir = .GlobalEnv
-    )
-  }
+  load_data("fingerprints")
+
   query_ids <- sms_compound_ids(query_ids)
   target_ids <- sms_compound_ids(target_ids) %>%
     remove_duplicates(query_ids)
@@ -114,12 +104,8 @@ sms_chemical_similarity <- function(query_ids, target_ids = NULL, show_compound_
 #' @param min_n Minimum number of shared assays between compounds
 #' @export
 sms_phenotypic_similarity <- function(query_ids, target_ids = NULL, min_n = 4, show_compound_names = FALSE) {
-  if (!exists("sms_data_phenotypic", envir = .GlobalEnv)) {
-    message("Loading phenotypic data...")
-    assign(
-      "sms_data_phenotypic", fst::read_fst("sms_phenotypic.fst", as.data.table = TRUE), envir = .GlobalEnv
-    )
-  }
+  load_data("phenotypic")
+
   query_ids <- sms_compound_ids(query_ids)
   target_ids <- sms_compound_ids(target_ids) %>%
     remove_duplicates(query_ids)
@@ -188,14 +174,14 @@ sms_all_similarities <- function(
 ) {
   similarities <- merge(
     sms_tas_similarity(query_ids, target_ids, min_n = min_n_tas),
-    sms_chemical_similarity(query_ids, target_ids),
+    sms_phenotypic_similarity(query_ids, target_ids, min_n = min_n_pfp),
     by = c("target_lspci_id", "query_lspci_id"),
-    all.x = TRUE,
-    all.y = include_structure_only
+    all = TRUE
   ) %>%
     merge(
-      sms_phenotypic_similarity(query_ids, target_ids, min_n = min_n_pfp),
-      all = TRUE,
+      sms_chemical_similarity(query_ids, target_ids),
+      all.x = TRUE,
+      all.y = include_structure_only,
       by = c("target_lspci_id", "query_lspci_id")
     )
   if (show_compound_names)
@@ -205,6 +191,8 @@ sms_all_similarities <- function(
 
 DEFAULT_QUERY_LIMIT = 1e9L
 check_number_comparisons <- function(x, y) {
+  load_data("fingerprints")
+
   if (!is.null(getOption("sms_large_queries")))
     return()
   n <- if (is.null(y)) length(x) * sms_data_fingerprints$n() else length(x) * length(y)
